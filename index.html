@@ -535,7 +535,11 @@ const idb={
 async function writeFile(){const w=await fileHandle.createWritable();await w.write(JSON.stringify(db,null,2));await w.close();}
 async function initFile(){
   const h=await idb.get('handle');
-  if(!h)return;
+  if(!h){
+    if(window.showOpenFilePicker)openModal({title:'Connect database file',body:`<div class="mb"><div class="note info">No database file is connected. Connect your <b>.json</b> database file so every change is saved to it automatically, or create a new one.</div></div>`,
+      actions:`<button class="btn" data-act="closeModal">Later</button><button class="btn" data-act="linkFile">${ico('link')} Create new file</button><button class="btn pri" data-act="openFile">${ico('upload')} Open database file</button>`});
+    return;
+  }
   fileHandle=h;
   try{fileState=(await h.queryPermission({mode:'readwrite'}))==='granted'?'ok':'need';}catch(e){fileState='need'}
   setSaveChip();
@@ -1329,7 +1333,7 @@ const A={
   pendF:t=>{ui.pendF=t.dataset.f;render(true)},
   shopClearDates:()=>{ui.shop.from=ui.shop.to='';render(true)},
   csvBill:()=>download(`Mess_Bill${ui.view==='billpend'?'_Pending':''}_${(db.settings.month||'').replace(/[^\w-]+/g,'_')}.csv`,billCSV(),'text/csv;charset=utf-8'),
-  exportJSON:()=>exportJSON(),importJSON:()=>$('#fileIn').click(),linkFile:()=>linkFile(),openFile:()=>openFile(),unlinkFile:()=>unlinkFile(),
+  exportJSON:()=>exportJSON(),importJSON:()=>$('#fileIn').click(),linkFile:()=>{closeModal();linkFile()},openFile:()=>{closeModal();openFile()},unlinkFile:()=>unlinkFile(),
   newMonth:()=>newMonthForm(),
   resetSample:async()=>{if(await confirmBox('Replace all current data with the original <b>November-2026</b> data from the Excel file?','Restore',true)){db=seed();ui.mealDate=null;save();render();toast('Sample data restored')}},
   clearAll:async()=>{if(await confirmBox('Erase <b>all</b> members, meals, deposits and shopping? Download a backup first if unsure.','Erase everything',true)){
